@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pressione">
+<title>Pressione Stefano</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --red: #C0392B;
+  --red-light: #f9eae8;
+  --red-mid: #e8a89f;
+  --blue: #1A5276;
+  --blue-light: #e8f0f7;
+  --green: #1E8449;
+  --green-light: #e8f5ed;
+  --amber: #B7770D;
+  --amber-light: #fdf3e3;
+  --bg: #F5F4F0;
+  --surface: #FFFFFF;
+  --surface2: #FAFAF8;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --text2: #666;
+  --text3: #999;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+/* Layout */
+.app { display: flex; flex-direction: column; height: 100%; max-width: 430px; margin: 0 auto; }
+.header { background: var(--red); color: white; padding: 52px 20px 16px; flex-shrink: 0; }
+.header-top { display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.header-sub { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+.tab-bar { display: flex; background: var(--red); padding: 0 20px 0; gap: 0; flex-shrink: 0; }
+.tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab.active { color: white; border-bottom-color: white; }
+.content { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.card-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+/* Metrics grid */
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.metric { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; box-shadow: var(--shadow); }
+.metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
+.metric-value { font-size: 26px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.metric-unit { font-size: 12px; font-weight: 400; color: var(--text3); margin-left: 2px; }
+.metric.danger .metric-value { color: var(--red); }
+.metric.warn .metric-value { color: var(--amber); }
+.metric.ok .metric-value { color: var(--green); }
+
+/* Last reading */
+.last-reading { background: var(--red-light); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--red-mid); }
+.last-reading-title { font-size: 11px; font-weight: 600; color: var(--red); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.last-reading-values { display: flex; gap: 16px; align-items: baseline; }
+.last-val { font-size: 36px; font-weight: 600; color: var(--red); letter-spacing: -1.5px; line-height: 1; }
+.last-sep { font-size: 24px; color: var(--red-mid); font-weight: 300; }
+.last-bpm { font-size: 20px; font-weight: 500; color: var(--red); }
+.last-bpm-label { font-size: 11px; color: var(--red); opacity: 0.6; }
+.last-date { font-size: 12px; color: var(--red); opacity: 0.7; margin-top: 6px; }
+
+/* Chart */
+.chart-wrap { position: relative; width: 100%; height: 200px; }
+.chart-filter { display: flex; gap: 6px; margin-bottom: 10px; }
+.filter-btn { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.filter-btn.active { background: var(--red); color: white; border-color: var(--red); }
+
+/* Form */
+.form-section { margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; font-weight: 500; color: var(--text2); }
+.form-group input {
+  padding: 12px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  font-size: 17px; font-family: 'DM Mono', monospace; font-weight: 500;
+  background: var(--surface2); color: var(--text); outline: none;
+  -webkit-appearance: none; appearance: none; width: 100%;
+}
+.form-group input:focus { border-color: var(--red); background: white; }
+.form-group input[type="date"], .form-group input[type="time"] {
+  font-size: 14px; font-family: 'DM Sans', sans-serif;
+}
+.big-input input { font-size: 28px; text-align: center; padding: 14px; }
+.btn-primary {
+  width: 100%; padding: 15px; border-radius: var(--radius-sm); border: none;
+  background: var(--red); color: white; font-size: 16px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: -0.2px;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+.form-error { font-size: 13px; color: var(--red); margin-top: -6px; margin-bottom: 8px; min-height: 18px; }
+
+/* Table / List */
+.entry-list { display: flex; flex-direction: column; gap: 8px; }
+.entry-item { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+.entry-vals { flex: 1; }
+.entry-main { font-size: 18px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+.entry-main .sep { color: var(--text3); font-weight: 300; }
+.entry-bpm { font-size: 13px; color: var(--text2); margin-top: 1px; }
+.entry-date { font-size: 11px; color: var(--text3); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.high { background: var(--red); }
+.status-dot.warn { background: var(--amber); }
+.status-dot.ok { background: var(--green); }
+.del-btn { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+.badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; }
+.badge.high { background: var(--red-light); color: var(--red); }
+.badge.warn { background: var(--amber-light); color: var(--amber); }
+.badge.ok { background: var(--green-light); color: var(--green); }
+
+.empty { text-align: center; color: var(--text3); font-size: 14px; padding: 32px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header h1" style="font-size:22px;font-weight:600;color:white;">Pressione Stefano</div>
+        <div class="header-sub" id="header-count">— misurazioni</div>
+      </div>
+      <div style="font-size:28px;">❤️</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="showPage('home')">Oggi</div>
+    <div class="tab" onclick="showPage('add')">+ Nuova</div>
+    <div class="tab" onclick="showPage('chart')">Grafico</div>
+    <div class="tab" onclick="showPage('history')">Storico</div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div id="last-reading-block"></div>
+      <div class="metrics" id="metrics"></div>
+      <div class="card">
+        <div class="card-title">Ultime 7 misurazioni</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>MAX</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>MIN</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>BPM</div>
+        </div>
+        <div style="position:relative;height:160px;"><canvas id="mini-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ADD -->
+    <div class="page" id="page-add">
+      <div class="card">
+        <div class="card-title">Nuova misurazione</div>
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group"><label>Data</label><input type="date" id="inp-date"></div>
+            <div class="form-group"><label>Ora</label><input type="time" id="inp-time"></div>
+          </div>
+          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="form-group big-input">
+              <label>MAX (sistolica)</label>
+              <input type="number" id="inp-max" min="60" max="300" placeholder="160" inputmode="numeric">
+            </div>
+            <div class="form-group big-input">
+              <label>MIN (diastolica)</label>
+              <input type="number" id="inp-min" min="40" max="200" placeholder="95" inputmode="numeric">
+            </div>
+            <div class="form-group big-input">
+              <label>Battiti</label>
+              <input type="number" id="inp-bpm" min="30" max="220" placeholder="65" inputmode="numeric">
+            </div>
+          </div>
+          <div class="form-error" id="form-error"></div>
+          <button class="btn-primary" onclick="addEntry()">Salva misurazione</button>
+        </div>
+      </div>
+      <div class="card" style="background:var(--blue-light);border:1px solid rgba(26,82,118,0.15);">
+        <div class="card-title" style="color:var(--blue);">Valori di riferimento</div>
+        <div style="font-size:13px;color:var(--blue);line-height:1.8;">
+          ✅ Normale: &lt; 130 / 85 mmHg<br>
+          ⚠️ Elevata: 130–160 / 85–100 mmHg<br>
+          🔴 Alta: &gt; 160 / 100 mmHg<br>
+          🔴 Crisi: &gt; 180 mmHg (sistolica)
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="page" id="page-chart">
+      <div class="card">
+        <div class="card-title">Andamento nel tempo</div>
+        <div class="chart-filter">
+          <button class="filter-btn active" onclick="setFilter(7,this)">7 gg</button>
+          <button class="filter-btn" onclick="setFilter(14,this)">14 gg</button>
+          <button class="filter-btn" onclick="setFilter(30,this)">30 gg</button>
+          <button class="filter-btn" onclick="setFilter(0,this)">Tutto</button>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>MAX sistolica</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>MIN diastolica</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Battiti</div>
+        </div>
+        <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
+      </div>
+      <div class="metrics" id="stats-grid"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="card" style="padding:10px 14px;">
+        <input type="text" id="search" placeholder="Cerca per data..." oninput="renderHistory()"
+          style="width:100%;border:none;background:none;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;">
+      </div>
+      <div class="entry-list" id="entry-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'pressione_stefano_v2';
+
+const historical = [
+  {date:'30/03/2022',time:'12:35',max:138,min:77,bpm:64},
+  {date:'12/03/2026',time:'18:15',max:222,min:153,bpm:63},
+  {date:'12/03/2026',time:'22:33',max:215,min:107,bpm:58},
+  {date:'13/03/2026',time:'07:30',max:210,min:110,bpm:64},
+  {date:'13/03/2026',time:'09:20',max:189,min:116,bpm:66},
+  {date:'13/03/2026',time:'10:45',max:191,min:131,bpm:61},
+  {date:'13/03/2026',time:'12:30',max:198,min:114,bpm:60},
+  {date:'13/03/2026',time:'14:00',max:202,min:105,bpm:67},
+  {date:'13/03/2026',time:'16:00',max:192,min:108,bpm:65},
+  {date:'13/03/2026',time:'16:05',max:187,min:103,bpm:60},
+  {date:'13/03/2026',time:'17:00',max:187,min:104,bpm:65},
+  {date:'14/03/2026',time:'09:00',max:186,min:97,bpm:72},
+  {date:'14/03/2026',time:'',max:178,min:98,bpm:61},
+  {date:'14/03/2026',time:'13:45',max:157,min:92,bpm:80},
+  {date:'14/03/2026',time:'16:00',max:162,min:96,bpm:65},
+  {date:'14/03/2026',time:'23:50',max:178,min:93,bpm:64},
+  {date:'15/03/2026',time:'08:00',max:181,min:102,bpm:53},
+  {date:'15/03/2026',time:'10:15',max:181,min:99,bpm:53},
+  {date:'15/03/2026',time:'10:15',max:180,min:99,bpm:54},
+  {date:'15/03/2026',time:'14:00',max:147,min:91,bpm:63},
+  {date:'15/03/2026',time:'17:00',max:163,min:91,bpm:62},
+  {date:'15/03/2026',time:'20:45',max:181,min:96,bpm:59},
+  {date:'15/03/2026',time:'20:45',max:182,min:95,bpm:61},
+  {date:'16/03/2026',time:'07:30',max:180,min:107,bpm:54},
+  {date:'16/03/2026',time:'12:00',max:192,min:103,bpm:57},
+  {date:'16/03/2026',time:'19:00',max:173,min:92,bpm:56},
+  {date:'16/03/2026',time:'19:00',max:160,min:93,bpm:60},
+  {date:'16/03/2026',time:'20:40',max:163,min:93,bpm:61},
+  {date:'17/03/2026',time:'08:45',max:177,min:98,bpm:59},
+  {date:'17/03/2026',time:'10:20',max:172,min:98,bpm:56},
+  {date:'17/03/2026',time:'10:20',max:175,min:109,bpm:58},
+  {date:'17/03/2026',time:'13:00',max:154,min:90,bpm:59},
+  {date:'17/03/2026',time:'16:15',max:159,min:92,bpm:65},
+  {date:'18/03/2026',time:'07:15',max:171,min:93,bpm:60},
+  {date:'18/03/2026',time:'12:20',max:177,min:100,bpm:61},
+  {date:'18/03/2026',time:'12:20',max:153,min:95,bpm:61},
+  {date:'18/03/2026',time:'12:20',max:154,min:92,bpm:63},
+  {date:'18/03/2026',time:'19:30',max:167,min:92,bpm:57},
+  {date:'18/03/2026',time:'22:30',max:153,min:88,bpm:67},
+  {date:'19/03/2026',time:'07:45',max:159,min:93,bpm:57},
+  {date:'19/03/2026',time:'12:40',max:165,min:93,bpm:60},
+  {date:'19/03/2026',time:'18:00',max:160,min:94,bpm:65},
+  {date:'19/03/2026',time:'20:45',max:152,min:87,bpm:61},
+  {date:'20/03/2026',time:'08:00',max:162,min:98,bpm:59},
+  {date:'20/03/2026',time:'11:00',max:176,min:103,bpm:63},
+  {date:'20/03/2026',time:'14:45',max:144,min:81,bpm:65},
+  {date:'20/03/2026',time:'19:40',max:167,min:99,bpm:63},
+  {date:'20/03/2026',time:'22:50',max:151,min:95,bpm:72},
+  {date:'20/03/2026',time:'22:50',max:160,min:99,bpm:69},
+  {date:'21/03/2026',time:'09:00',max:169,min:89,bpm:58},
+  {date:'21/03/2026',time:'14:45',max:149,min:79,bpm:74},
+];
+
+let entries = [];
+let miniChart = null, mainChart = null;
+let currentFilter = 7;
+
+function parseDateIT(d) {
+  const [dd,mm,yy] = d.split('/');
+  return new Date(yy, mm-1, dd);
+}
+
+function load() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    entries = s ? JSON.parse(s) : [...historical];
+  } catch(e) { entries = [...historical]; }
+  setDefaultDateTime();
+  renderAll();
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e) {}
+}
+
+function getStatus(max, min) {
+  if (max >= 180 || min >= 110) return {label:'Alta', cls:'high'};
+  if (max >= 160 || min >= 100) return {label:'Elevata', cls:'warn'};
+  return {label:'Ok', cls:'ok'};
+}
+
+function setDefaultDateTime() {
+  const now = new Date();
+  document.getElementById('inp-date').value = now.toISOString().split('T')[0];
+  document.getElementById('inp-time').value = now.toTimeString().slice(0,5);
+}
+
+function addEntry() {
+  const dateRaw = document.getElementById('inp-date').value;
+  const timeRaw = document.getElementById('inp-time').value;
+  const maxV = parseInt(document.getElementById('inp-max').value);
+  const minV = parseInt(document.getElementById('inp-min').value);
+  const bpmV = parseInt(document.getElementById('inp-bpm').value);
+  const err = document.getElementById('form-error');
+
+  if (!dateRaw || isNaN(maxV) || isNaN(minV) || isNaN(bpmV)) {
+    err.textContent = 'Compila tutti i campi richiesti.'; return;
+  }
+  if (maxV < 60 || maxV > 300 || minV < 40 || minV > 200) {
+    err.textContent = 'Valori fuori range. Ricontrolla.'; return;
+  }
+  err.textContent = '';
+  const [y,m,d] = dateRaw.split('-');
+  entries.push({date:`${d}/${m}/${y}`, time:timeRaw||'', max:maxV, min:minV, bpm:bpmV});
+  save();
+  renderAll();
+  document.getElementById('inp-max').value='';
+  document.getElementById('inp-min').value='';
+  document.getElementById('inp-bpm').value='';
+  showPage('home');
+}
+
+function deleteEntry(i) {
+  if (confirm('Eliminare questa misurazione?')) {
+    entries.splice(i,1); save(); renderAll();
+  }
+}
+
+function setFilter(n, btn) {
+  currentFilter = n;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMainChart();
+}
+
+function getFilteredEntries() {
+  if (currentFilter === 0) return entries;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - currentFilter);
+  return entries.filter(e => parseDateIT(e.date) >= cutoff);
+}
+
+function avg(arr) { return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+
+function renderAll() {
+  document.getElementById('header-count').textContent = `${entries.length} misurazioni`;
+  renderHome();
+  renderMiniChart();
+  renderMainChart();
+  renderStats();
+  renderHistory();
+}
+
+function renderHome() {
+  const last = entries[entries.length-1];
+  const block = document.getElementById('last-reading-block');
+  if (!last) { block.innerHTML=''; return; }
+  const s = getStatus(last.max, last.min);
+  block.innerHTML = `
+    <div class="last-reading">
+      <div class="last-reading-title">Ultima misurazione</div>
+      <div class="last-reading-values">
+        <div class="last-val">${last.max}</div>
+        <div class="last-sep">/</div>
+        <div class="last-val">${last.min}</div>
+        <div style="margin-left:8px">
+          <div class="last-bpm">${last.bpm} <span class="last-bpm-label">bpm</span></div>
+          <span class="badge ${s.cls}" style="margin-top:4px;display:inline-block">${s.label}</span>
+        </div>
+      </div>
+      <div class="last-date">${last.date}${last.time?' alle '+last.time:''}</div>
+    </div>`;
+
+  const avgMax = avg(entries.map(e=>e.max));
+  const avgMin = avg(entries.map(e=>e.min));
+  const avgBpm = avg(entries.map(e=>e.bpm));
+  const peak = Math.max(...entries.map(e=>e.max));
+  const mCls = v => v>=180?'danger':v>=160?'warn':'ok';
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric ${mCls(avgMax)}"><div class="metric-label">Media MAX</div><div class="metric-value">${avgMax}<span class="metric-unit">mmHg</span></div></div>
+    <div class="metric ${mCls(avgMin)}"><div class="metric-label">Media MIN</div><div class="metric-value">${avgMin}<span class="metric-unit">mmHg</span></div></div>
+    <div class="metric"><div class="metric-label">Media battiti</div><div class="metric-value">${avgBpm}<span class="metric-unit">bpm</span></div></div>
+    <div class="metric danger"><div class="metric-label">Picco MAX</div><div class="metric-value">${peak}<span class="metric-unit">mmHg</span></div></div>`;
+}
+
+function buildChartData(data) {
+  return {
+    labels: data.map(e=>e.date+(e.time?' '+e.time.slice(0,5):'')),
+    datasets: [
+      {label:'MAX',data:data.map(e=>e.max),borderColor:'#C0392B',borderWidth:2,pointRadius:2,tension:0.3,fill:false},
+      {label:'MIN',data:data.map(e=>e.min),borderColor:'#1A5276',borderWidth:2,pointRadius:2,tension:0.3,fill:false},
+      {label:'BPM',data:data.map(e=>e.bpm),borderColor:'#1E8449',borderWidth:1.5,pointRadius:2,tension:0.3,fill:false},
+    ]
+  };
+}
+
+const chartOpts = (mini) => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,titleFont:{size:11},bodyFont:{size:11}}},
+  scales:{
+    x:{ticks:{font:{size:9},maxRotation:40,autoSkip:true,maxTicksLimit:mini?5:10},grid:{display:false}},
+    y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'},min:40}
+  }
+});
+
+function renderMiniChart() {
+  if (miniChart) miniChart.destroy();
+  const last7 = entries.slice(-7);
+  miniChart = new Chart(document.getElementById('mini-chart'), {
+    type:'line', data:buildChartData(last7), options:chartOpts(true)
+  });
+}
+
+function renderMainChart() {
+  if (mainChart) mainChart.destroy();
+  const data = getFilteredEntries();
+  mainChart = new Chart(document.getElementById('main-chart'), {
+    type:'line', data:buildChartData(data), options:chartOpts(false)
+  });
+}
+
+function renderStats() {
+  const data = getFilteredEntries();
+  if (!data.length) { document.getElementById('stats-grid').innerHTML=''; return; }
+  const mCls = v => v>=180?'danger':v>=160?'warn':'ok';
+  const avgMax = avg(data.map(e=>e.max));
+  const avgMin = avg(data.map(e=>e.min));
+  const avgBpm = avg(data.map(e=>e.bpm));
+  const peak = Math.max(...data.map(e=>e.max));
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="metric ${mCls(avgMax)}"><div class="metric-label">Media MAX</div><div class="metric-value">${avgMax}<span class="metric-unit">mmHg</span></div></div>
+    <div class="metric ${mCls(avgMin)}"><div class="metric-label">Media MIN</div><div class="metric-value">${avgMin}<span class="metric-unit">mmHg</span></div></div>
+    <div class="metric"><div class="metric-label">Media BPM</div><div class="metric-value">${avgBpm}<span class="metric-unit">bpm</span></div></div>
+    <div class="metric danger"><div class="metric-label">Picco MAX</div><div class="metric-value">${peak}<span class="metric-unit">mmHg</span></div></div>`;
+}
+
+function renderHistory() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const list = document.getElementById('entry-list');
+  const filtered = [...entries].reverse().filter(e=>!q||e.date.includes(q)||e.time.includes(q));
+  if (!filtered.length) { list.innerHTML='<div class="empty">Nessuna misurazione trovata.</div>'; return; }
+  list.innerHTML = filtered.map((e,ri)=>{
+    const i = entries.length-1-([...entries].reverse().indexOf(e));
+    const s = getStatus(e.max,e.min);
+    return `<div class="entry-item">
+      <div class="status-dot ${s.cls}"></div>
+      <div class="entry-vals">
+        <div class="entry-main">${e.max}<span class="sep"> / </span>${e.min} <span style="font-size:14px;color:var(--text3)">mmHg</span></div>
+        <div class="entry-bpm">${e.bpm} bpm &nbsp;·&nbsp; <span class="entry-date">${e.date}${e.time?' '+e.time:''}</span></div>
+      </div>
+      <span class="badge ${s.cls}">${s.label}</span>
+      <button class="del-btn" onclick="deleteEntry(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const tabs = ['home','add','chart','history'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  if (name==='chart') renderMainChart();
+}
+
+load();
+</script>
+</body>
+</html>

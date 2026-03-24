@@ -244,7 +244,7 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
 </div>
 
 <script>
-const STORAGE_KEY = 'pressione_stefano_v2';
+const STORAGE_KEY = 'pressione_stefano_v3';
 
 const historical = [
   {date:'30/03/2022',time:'12:35',max:138,min:77,bpm:64},
@@ -298,6 +298,17 @@ const historical = [
   {date:'20/03/2026',time:'22:50',max:160,min:99,bpm:69},
   {date:'21/03/2026',time:'09:00',max:169,min:89,bpm:58},
   {date:'21/03/2026',time:'14:45',max:149,min:79,bpm:74},
+  {date:'21/03/2026',time:'18:15',max:160,min:89,bpm:66},
+  {date:'21/03/2026',time:'22:37',max:162,min:96,bpm:72},
+  {date:'22/03/2026',time:'07:47',max:167,min:98,bpm:56},
+  {date:'22/03/2026',time:'18:02',max:150,min:98,bpm:67},
+  {date:'22/03/2026',time:'23:19',max:156,min:93,bpm:66},
+  {date:'23/03/2026',time:'17:16',max:154,min:89,bpm:77},
+  {date:'23/03/2026',time:'19:17',max:156,min:66,bpm:77},
+  {date:'23/03/2026',time:'19:17',max:144,min:85,bpm:77},
+  {date:'23/03/2026',time:'19:17',max:139,min:83,bpm:82},
+  {date:'23/03/2026',time:'23:01',max:136,min:77,bpm:64},
+  {date:'24/03/2026',time:'08:10',max:159,min:82,bpm:67},
 ];
 
 let entries = [];
@@ -312,7 +323,24 @@ function parseDateIT(d) {
 function load() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
-    entries = s ? JSON.parse(s) : [...historical];
+    if (s) {
+      const saved = JSON.parse(s);
+      // Merge: add any historical entries not already in saved data
+      const savedKeys = new Set(saved.map(e => e.date+'|'+e.time+'|'+e.max+'|'+e.min+'|'+e.bpm));
+      const missing = historical.filter(e => !savedKeys.has(e.date+'|'+e.time+'|'+e.max+'|'+e.min+'|'+e.bpm));
+      if (missing.length > 0) {
+        entries = [...saved, ...missing].sort((a,b) => {
+          const da = parseDateIT(a.date).getTime() + (a.time ? parseInt(a.time.replace(':','')) : 0);
+          const db = parseDateIT(b.date).getTime() + (b.time ? parseInt(b.time.replace(':','')) : 0);
+          return da - db;
+        });
+        save();
+      } else {
+        entries = saved;
+      }
+    } else {
+      entries = [...historical];
+    }
   } catch(e) { entries = [...historical]; }
   setDefaultDateTime();
   renderAll();

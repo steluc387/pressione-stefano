@@ -6,15 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pressione">
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0iI0MwMzkyQiIvPgogIDxwYXRoIGQ9Ik0yNTYgMzkwIEMyNTYgMzkwIDEyMCAzMDAgMTIwIDIxMCBDMTIwIDE2MCAxNjAgMTMwIDIwMCAxMzAgQzIyNSAxMzAgMjQ1IDE0MyAyNTYgMTYwIEMyNjcgMTQzIDI4NyAxMzAgMzEyIDEzMCBDMzUyIDEzMCAzOTIgMTYwIDM5MiAyMTAgQzM5MiAzMDAgMjU2IDM5MCAyNTYgMzkwWiIgZmlsbD0id2hpdGUiLz4KICA8dGV4dCB4PSIyNTYiIHk9IjQ2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjUyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjcpIj5tbUhnPC90ZXh0Pgo8L3N2Zz4=">
-<title>Pressione Stefano</title>
+<title>BP Stefano Lucidi</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
-  --red: #C0392B;
-  --red-light: #f9eae8;
-  --red-mid: #e8a89f;
+  --red: #3399FF;
+  --red-light: #e6f2ff;
+  --red-mid: #99ccff;
   --blue: #1A5276;
   --blue-light: #e8f0f7;
   --green: #1E8449;
@@ -122,13 +121,6 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
 .badge.ok { background: var(--green-light); color: var(--green); }
 
 .empty { text-align: center; color: var(--text3); font-size: 14px; padding: 32px; }
-.btn-export {
-  padding: 12px; border-radius: var(--radius-sm); border: none;
-  background: var(--blue); color: white; font-size: 14px; font-weight: 600;
-  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.1s;
-}
-.btn-export:active { opacity: 0.8; }
-.btn-export-pdf { background: var(--green); }
 .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -139,10 +131,9 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
   <div class="header">
     <div class="header-top">
       <div>
-        <div class="header h1" style="font-size:22px;font-weight:600;color:white;">Pressione Stefano</div>
+        <div class="header h1" style="font-size:22px;font-weight:600;color:white;">BP Stefano Lucidi</div>
         <div class="header-sub" id="header-count">— misurazioni</div>
       </div>
-      <div style="font-size:28px;">❤️</div>
     </div>
   </div>
   <div class="tab-bar">
@@ -215,6 +206,8 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
           <button class="filter-btn active" onclick="setFilter(7,this)">7 gg</button>
           <button class="filter-btn" onclick="setFilter(14,this)">14 gg</button>
           <button class="filter-btn" onclick="setFilter(30,this)">30 gg</button>
+          <button class="filter-btn" onclick="setFilter(60,this)">60 gg</button>
+          <button class="filter-btn" onclick="setFilter(90,this)">90 gg</button>
           <button class="filter-btn" onclick="setFilter(0,this)">Tutto</button>
         </div>
         <div class="legend">
@@ -223,6 +216,9 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
           <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Battiti</div>
         </div>
         <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn-primary" onclick="exportChart()" style="font-size:14px;padding:10px;">📊 Esporta Grafico</button>
+        </div>
       </div>
       <div class="metrics" id="stats-grid"></div>
     </div>
@@ -233,9 +229,19 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
         <input type="text" id="search" placeholder="Cerca per data..." oninput="renderHistory()"
           style="width:100%;border:none;background:none;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-        <button class="btn-export" onclick="exportCSV()">📊 Esporta CSV</button>
-        <button class="btn-export btn-export-pdf" onclick="exportPDF()">📄 Esporta PDF</button>
+      <div class="card" style="padding:12px;">
+        <div class="chart-filter" style="margin-bottom:8px;">
+          <button class="filter-btn active" onclick="setHistoryFilter(7,this)">7 gg</button>
+          <button class="filter-btn" onclick="setHistoryFilter(14,this)">14 gg</button>
+          <button class="filter-btn" onclick="setHistoryFilter(30,this)">30 gg</button>
+          <button class="filter-btn" onclick="setHistoryFilter(60,this)">60 gg</button>
+          <button class="filter-btn" onclick="setHistoryFilter(90,this)">90 gg</button>
+          <button class="filter-btn" onclick="setHistoryFilter(0,this)">Tutto</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" onclick="exportCSV()" style="font-size:14px;padding:10px;">📄 CSV</button>
+          <button class="btn-primary" onclick="exportPDF()" style="font-size:14px;padding:10px;">📕 PDF</button>
+        </div>
       </div>
       <div class="entry-list" id="entry-list"></div>
     </div>
@@ -244,7 +250,7 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
 </div>
 
 <script>
-const STORAGE_KEY = 'pressione_stefano_v3';
+const STORAGE_KEY = 'pressione_stefano_v2';
 
 const historical = [
   {date:'30/03/2022',time:'12:35',max:138,min:77,bpm:64},
@@ -258,8 +264,8 @@ const historical = [
   {date:'13/03/2026',time:'16:00',max:192,min:108,bpm:65},
   {date:'13/03/2026',time:'16:05',max:187,min:103,bpm:60},
   {date:'13/03/2026',time:'17:00',max:187,min:104,bpm:65},
-  {date:'14/03/2026',time:'09:00',max:186,min:97,bpm:72},
   {date:'14/03/2026',time:'',max:178,min:98,bpm:61},
+  {date:'14/03/2026',time:'09:00',max:186,min:97,bpm:72},
   {date:'14/03/2026',time:'13:45',max:157,min:92,bpm:80},
   {date:'14/03/2026',time:'16:00',max:162,min:96,bpm:65},
   {date:'14/03/2026',time:'23:50',max:178,min:93,bpm:64},
@@ -309,11 +315,164 @@ const historical = [
   {date:'23/03/2026',time:'19:17',max:139,min:83,bpm:82},
   {date:'23/03/2026',time:'23:01',max:136,min:77,bpm:64},
   {date:'24/03/2026',time:'08:10',max:159,min:82,bpm:67},
+  {date:'24/03/2026',time:'12:04',max:153,min:95,bpm:67},
+  {date:'24/03/2026',time:'14:07',max:156,min:84,bpm:70},
+  {date:'24/03/2026',time:'19:13',max:133,min:80,bpm:77},
+  {date:'25/03/2026',time:'09:00',max:151,min:92,bpm:59},
+  {date:'25/03/2026',time:'12:46',max:140,min:81,bpm:58},
+  {date:'25/03/2026',time:'16:51',max:142,min:78,bpm:60},
+  {date:'25/03/2026',time:'19:43',max:143,min:84,bpm:60},
+  {date:'25/03/2026',time:'00:05',max:153,min:91,bpm:73},
+  {date:'26/03/2026',time:'07:26',max:172,min:94,bpm:63},
+  {date:'26/03/2026',time:'10:54',max:150,min:88,bpm:63},
+  {date:'26/03/2026',time:'16:17',max:145,min:80,bpm:59},
+  {date:'27/03/2026',time:'07:51',max:156,min:98,bpm:66},
+  {date:'27/03/2026',time:'12:34',max:150,min:92,bpm:83},
+  {date:'27/03/2026',time:'17:19',max:136,min:84,bpm:71},
+  {date:'27/03/2026',time:'21:44',max:127,min:83,bpm:69},
+  {date:'28/03/2026',time:'08:28',max:149,min:88,bpm:73},
+  {date:'28/03/2026',time:'13:32',max:123,min:78,bpm:81},
+  {date:'28/03/2026',time:'16:45',max:149,min:88,bpm:83},
+  {date:'29/03/2026',time:'10:47',max:127,min:92,bpm:65},
+  {date:'29/03/2026',time:'13:27',max:128,min:78,bpm:64},
+  {date:'29/03/2026',time:'22:08',max:143,min:85,bpm:68},
+  {date:'30/03/2026',time:'09:25',max:146,min:79,bpm:73},
+  {date:'30/03/2026',time:'12:50',max:143,min:81,bpm:68},
+  {date:'31/03/2026',time:'09:10',max:150,min:87,bpm:67},
+  {date:'31/03/2026',time:'13:07',max:164,min:93,bpm:75},
+  {date:'31/03/2026',time:'18:52',max:148,min:80,bpm:64},
+  {date:'31/03/2026',time:'21:20',max:141,min:83,bpm:73},
+  {date:'01/04/2026',time:'08:18',max:149,min:83,bpm:72},
+  {date:'01/04/2026',time:'12:42',max:141,min:83,bpm:65}
 ];
 
 let entries = [];
 let miniChart = null, mainChart = null;
 let currentFilter = 7;
+let historyFilter = 0;
+
+function setHistoryFilter(n, btn) {
+  historyFilter = n;
+  document.querySelectorAll('#page-history .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getHistoryFilteredEntries() {
+  if (historyFilter === 0) return entries;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - historyFilter);
+  return entries.filter(e => parseDateIT(e.date) >= cutoff);
+}
+
+function exportChart() {
+  const canvas = document.getElementById('main-chart');
+  const link = document.createElement('a');
+  const period = currentFilter === 0 ? 'tutto' : currentFilter + 'gg';
+  link.download = `grafico_pressione_${period}_${new Date().toISOString().split('T')[0]}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function exportCSV() {
+  const data = getHistoryFilteredEntries();
+  if (!data.length) { alert('Nessun dato da esportare'); return; }
+  
+  let csv = 'Data,Ora,MAX (mmHg),MIN (mmHg),Battiti (bpm),Status\n';
+  data.forEach(e => {
+    const s = getStatus(e.max, e.min);
+    csv += `${e.date},${e.time},${e.max},${e.min},${e.bpm},${s.label}\n`;
+  });
+  
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const period = historyFilter === 0 ? 'tutto' : historyFilter + 'gg';
+  link.download = `pressione_${period}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+}
+
+function exportPDF() {
+  const data = getHistoryFilteredEntries();
+  if (!data.length) { alert('Nessun dato da esportare'); return; }
+  
+  const period = historyFilter === 0 ? 'Tutti i dati' : `Ultimi ${historyFilter} giorni`;
+  const avgMax = avg(data.map(e=>e.max));
+  const avgMin = avg(data.map(e=>e.min));
+  const avgBpm = avg(data.map(e=>e.bpm));
+  const peak = Math.max(...data.map(e=>e.max));
+  
+  let html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; }
+  h1 { color: #3399FF; }
+  h2 { color: #333; margin-top: 30px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+  .stat { background: #f5f5f5; padding: 15px; border-radius: 8px; }
+  .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
+  .stat-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+  th { background: #3399FF; color: white; }
+  .high { color: #C0392B; font-weight: bold; }
+  .warn { color: #B7770D; font-weight: bold; }
+  .ok { color: #1E8449; }
+</style>
+</head>
+<body>
+  <h1>BP Stefano Lucidi - Report Pressione</h1>
+  <p><strong>Periodo:</strong> ${period}<br>
+  <strong>Data report:</strong> ${new Date().toLocaleDateString('it-IT')}<br>
+  <strong>Totale misurazioni:</strong> ${data.length}</p>
+  
+  <h2>Statistiche</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Media MAX</div><div class="stat-value">${avgMax} mmHg</div></div>
+    <div class="stat"><div class="stat-label">Media MIN</div><div class="stat-value">${avgMin} mmHg</div></div>
+    <div class="stat"><div class="stat-label">Media Battiti</div><div class="stat-value">${avgBpm} bpm</div></div>
+    <div class="stat"><div class="stat-label">Picco MAX</div><div class="stat-value">${peak} mmHg</div></div>
+  </div>
+  
+  <h2>Dettaglio Misurazioni</h2>
+  <table>
+    <tr>
+      <th>Data</th>
+      <th>Ora</th>
+      <th>MAX</th>
+      <th>MIN</th>
+      <th>BPM</th>
+      <th>Status</th>
+    </tr>`;
+  
+  [...data].reverse().forEach(e => {
+    const s = getStatus(e.max, e.min);
+    html += `
+    <tr>
+      <td>${e.date}</td>
+      <td>${e.time || '-'}</td>
+      <td class="${s.cls}">${e.max}</td>
+      <td class="${s.cls}">${e.min}</td>
+      <td>${e.bpm}</td>
+      <td class="${s.cls}">${s.label}</td>
+    </tr>`;
+  });
+  
+  html += `
+  </table>
+</body>
+</html>`;
+  
+  const blob = new Blob([html], { type: 'text/html' });
+  const link = document.createElement('a');
+  const periodName = historyFilter === 0 ? 'tutto' : historyFilter + 'gg';
+  link.download = `report_pressione_${periodName}_${new Date().toISOString().split('T')[0]}.html`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  
+  alert('File HTML salvato. Aprilo e usa "Stampa > Salva come PDF" dal browser per ottenere il PDF.');
+}
 
 function parseDateIT(d) {
   const [dd,mm,yy] = d.split('/');
@@ -323,24 +482,7 @@ function parseDateIT(d) {
 function load() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
-    if (s) {
-      const saved = JSON.parse(s);
-      // Merge: add any historical entries not already in saved data
-      const savedKeys = new Set(saved.map(e => e.date+'|'+e.time+'|'+e.max+'|'+e.min+'|'+e.bpm));
-      const missing = historical.filter(e => !savedKeys.has(e.date+'|'+e.time+'|'+e.max+'|'+e.min+'|'+e.bpm));
-      if (missing.length > 0) {
-        entries = [...saved, ...missing].sort((a,b) => {
-          const da = parseDateIT(a.date).getTime() + (a.time ? parseInt(a.time.replace(':','')) : 0);
-          const db = parseDateIT(b.date).getTime() + (b.time ? parseInt(b.time.replace(':','')) : 0);
-          return da - db;
-        });
-        save();
-      } else {
-        entries = saved;
-      }
-    } else {
-      entries = [...historical];
-    }
+    entries = s ? JSON.parse(s) : [...historical];
   } catch(e) { entries = [...historical]; }
   setDefaultDateTime();
   renderAll();
@@ -453,9 +595,9 @@ function buildChartData(data) {
   return {
     labels: data.map(e=>e.date+(e.time?' '+e.time.slice(0,5):'')),
     datasets: [
-      {label:'MAX',data:data.map(e=>e.max),borderColor:'#C0392B',borderWidth:2,pointRadius:2,tension:0.3,fill:false},
-      {label:'MIN',data:data.map(e=>e.min),borderColor:'#1A5276',borderWidth:2,pointRadius:2,tension:0.3,fill:false},
-      {label:'BPM',data:data.map(e=>e.bpm),borderColor:'#1E8449',borderWidth:1.5,pointRadius:2,tension:0.3,fill:false},
+      {label:'MAX',data:data.map(e=>e.max),borderColor:'#C0392B',borderWidth:2,pointRadius:1,tension:0.3,fill:false},
+      {label:'MIN',data:data.map(e=>e.min),borderColor:'#1A5276',borderWidth:2,pointRadius:1,tension:0.3,fill:false},
+      {label:'BPM',data:data.map(e=>e.bpm),borderColor:'#1E8449',borderWidth:1.5,pointRadius:1,tension:0.3,fill:false},
     ]
   };
 }
@@ -528,67 +670,6 @@ function showPage(name) {
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   if (name==='chart') renderMainChart();
 }
-
-function exportCSV() {
-  const header = 'Data,Ora,MAX (mmHg),MIN (mmHg),Battiti (bpm),Stato\n';
-  const rows = entries.map(e => {
-    const s = getStatus(e.max, e.min);
-    return `${e.date},${e.time||''},${e.max},${e.min},${e.bpm},${s.label}`;
-  }).join('\n');
-  const blob = new Blob([header + rows], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pressione_stefano.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportPDF() {
-  const win = window.open('', '_blank');
-  const avgMax = avg(entries.map(e=>e.max));
-  const avgMin = avg(entries.map(e=>e.min));
-  const avgBpm = avg(entries.map(e=>e.bpm));
-  const peak = Math.max(...entries.map(e=>e.max));
-  const rows = [...entries].reverse().map(e => {
-    const s = getStatus(e.max, e.min);
-    const color = s.cls==='high'?'#C0392B':s.cls==='warn'?'#B7770D':'#1E8449';
-    return `<tr><td>${e.date}</td><td>${e.time||'—'}</td><td><strong>${e.max}</strong></td><td><strong>${e.min}</strong></td><td>${e.bpm}</td><td style="color:${color};font-weight:600">${s.label}</td></tr>`;
-  }).join('');
-  const avgMaxV = avg(entries.map(e=>e.max));
-  const avgMinV = avg(entries.map(e=>e.min));
-  const avgBpmV = avg(entries.map(e=>e.bpm));
-  const peakV = Math.max(...entries.map(e=>e.max));
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pressione Stefano</title>
-  <style>
-    body{font-family:Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px;}
-    h1{color:#C0392B;font-size:20px;margin-bottom:4px;}
-    .sub{color:#999;font-size:12px;margin-bottom:16px;}
-    .stats{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
-    .stat{background:#f9eae8;border-radius:8px;padding:10px 16px;}
-    .stat-label{font-size:10px;color:#999;text-transform:uppercase;}
-    .stat-val{font-size:22px;font-weight:bold;color:#C0392B;}
-    table{width:100%;border-collapse:collapse;}
-    th{background:#C0392B;color:white;padding:8px 10px;text-align:left;font-size:12px;}
-    td{padding:7px 10px;border-bottom:1px solid #eee;}
-    tr:nth-child(even) td{background:#fafafa;}
-    @media print{button{display:none;}}
-  </style></head><body>
-  <h1>❤️ Pressione Stefano</h1>
-  <div class="sub">Esportato il ${new Date().toLocaleDateString('it-IT')} — ${entries.length} misurazioni totali</div>
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Media MAX</div><div class="stat-val">${avgMaxV} <small>mmHg</small></div></div>
-    <div class="stat"><div class="stat-label">Media MIN</div><div class="stat-val">${avgMinV} <small>mmHg</small></div></div>
-    <div class="stat"><div class="stat-label">Media BPM</div><div class="stat-val">${avgBpmV} <small>bpm</small></div></div>
-    <div class="stat"><div class="stat-label">Picco MAX</div><div class="stat-val">${peakV} <small>mmHg</small></div></div>
-  </div>
-  <table><thead><tr><th>Data</th><th>Ora</th><th>MAX</th><th>MIN</th><th>BPM</th><th>Stato</th></tr></thead>
-  <tbody>${rows}</tbody></table><br>
-  <button onclick="window.print()" style="background:#C0392B;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;">🖨️ Stampa / Salva PDF</button>
-  </body></html>`);
-  win.document.close();
-}
-
 
 load();
 </script>
